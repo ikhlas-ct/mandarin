@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\KategoriController as AdminKategoriController;
+use App\Http\Controllers\Admin\KosakataController as AdminKosakataController;
 use App\Http\Controllers\Admin\LevelHskController as AdminLevelHskController;
 use App\Http\Controllers\Admin\PelajarController as AdminPelajarController;
 use App\Http\Controllers\Admin\ProfilController as AdminProfilController;
@@ -29,6 +30,15 @@ Route::middleware(['auth'])->group(function () {
 
         // Tingkat HSK (CRUD: index, create, store, show, edit, update, destroy)
         Route::resource('admin/level-hsk', AdminLevelHskController::class)->names('admin.level-hsk');
+
+        // Kosakata + contoh kalimat (CRUD) dan import Excel
+        // Route import & template HARUS di atas resource, supaya "import" tidak dianggap {kosakata}.
+        Route::get('/admin/kosakata/import', [AdminKosakataController::class, 'importForm'])->name('admin.kosakata.import');
+        Route::post('/admin/kosakata/import', [AdminKosakataController::class, 'importStore'])->name('admin.kosakata.import.store');
+        Route::get('/admin/kosakata/template', [AdminKosakataController::class, 'template'])->name('admin.kosakata.template');
+        Route::resource('admin/kosakata', AdminKosakataController::class)
+            ->names('admin.kosakata')
+            ->parameters(['kosakata' => 'kosakata']);
 
         // Pelajar + akun loginnya (CRUD: index, create, store, show, edit, update, destroy)
         Route::resource('admin/pelajar', AdminPelajarController::class)->names('admin.pelajar');

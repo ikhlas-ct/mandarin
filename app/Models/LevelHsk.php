@@ -26,4 +26,9 @@ class LevelHsk extends Model
     {
         return $this->hasMany(Kosakata::class, 'level_hsk_id');
     }
+
+    public function grupSoals(): HasMany
+    {
+        return $this->hasMany(GrupSoal::class, 'level_hsk_id');
+    }
 }

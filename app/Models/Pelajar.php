@@ -58,4 +58,9 @@ class Pelajar extends Model
             ->withPivot(['status', 'terakhir_diulang', 'jumlah_ulang', 'benar_beruntun', 'review_berikutnya'])
             ->withTimestamps();
     }
+
+    public function hasilUjians(): HasMany
+    {
+        return $this->hasMany(HasilUjian::class, 'pelajar_id');
+    }
 }

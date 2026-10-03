@@ -61,6 +61,14 @@
                     </a>
                 </li>
 
+                <!-- Kosakata -->
+                <li class="nav-item {{ request()->routeIs('admin.kosakata*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.kosakata.index') }}">
+                        <i class="fas fa-language"></i>
+                        <p>Kosakata</p>
+                    </a>
+                </li>
+
                 <!-- Pelajar -->
                 <li class="nav-item {{ request()->routeIs('admin.pelajar*') ? 'active' : '' }}">
                     <a href="{{ route('admin.pelajar.index') }}">
