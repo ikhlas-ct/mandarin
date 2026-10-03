@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\KategoriController as AdminKategoriController;
+use App\Http\Controllers\Admin\LevelHskController as AdminLevelHskController;
 use App\Http\Controllers\Admin\ProfilController as AdminProfilController;
 use App\Http\Controllers\Admin\WebsiteSettingController as AdminWebsiteSettingController;
 use App\Http\Controllers\Login\AuthController;
@@ -20,6 +22,12 @@ Route::middleware(['auth'])->group(function () {
 
         // Dashboard
         Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+
+        // Kategori kosakata (CRUD: index, create, store, show, edit, update, destroy)
+        Route::resource('admin/kategori', AdminKategoriController::class)->names('admin.kategori');
+
+        // Tingkat HSK (CRUD: index, create, store, show, edit, update, destroy)
+        Route::resource('admin/level-hsk', AdminLevelHskController::class)->names('admin.level-hsk');
 
         // Profil admin
         Route::get('/admin/profil', [AdminProfilController::class, 'index'])->name('admin.profil');

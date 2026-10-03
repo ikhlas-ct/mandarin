@@ -45,6 +45,22 @@
                     </a>
                 </li>
 
+                <!-- Kategori -->
+                <li class="nav-item {{ request()->routeIs('admin.kategori*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.kategori.index') }}">
+                        <i class="fas fa-tags"></i>
+                        <p>Kategori</p>
+                    </a>
+                </li>
+
+                <!-- Tingkat HSK -->
+                <li class="nav-item {{ request()->routeIs('admin.level-hsk*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.level-hsk.index') }}">
+                        <i class="fas fa-layer-group"></i>
+                        <p>Tingkat HSK</p>
+                    </a>
+                </li>
+
                 <!-- Pengaturan Website -->
                 <li class="nav-item {{ request()->routeIs('admin.pengaturan*') ? 'active' : '' }}">
                     <a href="{{ route('admin.pengaturan') }}">
