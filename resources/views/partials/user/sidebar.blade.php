@@ -45,6 +45,14 @@
                     </a>
                 </li>
 
+                <!-- Pengaturan Website -->
+                <li class="nav-item {{ request()->routeIs('admin.pengaturan*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.pengaturan') }}">
+                        <i class="fas fa-cogs"></i>
+                        <p>Pengaturan Website</p>
+                    </a>
+                </li>
+
                 <!-- Profil Saya -->
                 <li class="nav-item {{ request()->routeIs('admin.profil*') ? 'active' : '' }}">
                     <a href="{{ route('admin.profil') }}">

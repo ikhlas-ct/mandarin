@@ -114,6 +114,20 @@
 
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+    <script>
+        // Alert flash (class .alert-flash) hilang otomatis setelah 3 detik.
+        // Tombol X (data-bs-dismiss="alert") tetap bisa dipakai kapan saja.
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.alert-flash').forEach(function (el) {
+                setTimeout(function () {
+                    if (!el.isConnected) return;       // sudah ditutup manual
+                    el.classList.remove('show');       // fade out
+                    setTimeout(function () { el.remove(); }, 300);
+                }, 3000);
+            });
+        });
+    </script>
+
     @yield('scripts')
 </body>
 </html>

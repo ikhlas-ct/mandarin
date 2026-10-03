@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class WebsiteSetting extends Model
 {
     protected $table = 'website_settings';
-    protected $primaryKey = 'id';
 
     protected $fillable = [
         'nama',
@@ -24,47 +23,40 @@ class WebsiteSetting extends Model
         'paragraf_pengantar',
         'gambar_pengantar',
         'about_us',
-        'why_choose_us',
     ];
 
-    // ──────────────────────────────────────────────────────────
-    //  ACCESSOR: URL logo (selalu benar, ada fallback default)
-    // ──────────────────────────────────────────────────────────
+    /**
+     * Ambil satu-satunya baris pengaturan.
+     * Kalau belum ada, kembalikan instance kosong supaya layout/sidebar
+     * tidak error saat memanggil $settings->nama atau $settings->logo_url.
+     */
+    public static function current(): self
+    {
+        return static::first() ?? new static;
+    }
+
+    /**
+     * Alias untuk current(). Dipakai oleh DashboardController
+     * (WebsiteSetting::getSetting()), jadi jangan dihapus.
+     */
+    public static function getSetting(): self
+    {
+        return static::current();
+    }
+
+    /** URL logo. Fallback ke logo bawaan template kalau belum diunggah. */
     public function getLogoUrlAttribute(): string
     {
-        if (!$this->logo) {
-            return asset('default-image/default_logo.png');
-        }
-
-        // Jika sudah berupa full URL (http/https), kembalikan apa adanya
-        if (str_starts_with($this->logo, 'http')) {
-            return $this->logo;
-        }
-
-        return asset('storage/' . $this->logo);
+        return $this->logo
+            ? asset('storage/' . $this->logo)
+            : asset('assets/img/kaiadmin/logo_light.svg'); // ganti sesuai logo default kamu
     }
 
-    // ──────────────────────────────────────────────────────────
-    //  ACCESSOR: URL gambar pengantar
-    // ──────────────────────────────────────────────────────────
-    public function getGambarPengantarUrlAttribute(): string
+    /** URL gambar pengantar, null kalau belum ada. */
+    public function getGambarPengantarUrlAttribute(): ?string
     {
-        if (!$this->gambar_pengantar) {
-            return asset('default-image/default_banner.png');
-        }
-
-        if (str_starts_with($this->gambar_pengantar, 'http')) {
-            return $this->gambar_pengantar;
-        }
-
-        return asset('storage/' . $this->gambar_pengantar);
-    }
-
-    // ──────────────────────────────────────────────────────────
-    //  STATIC HELPER
-    // ──────────────────────────────────────────────────────────
-    public static function getSetting(): ?self
-    {
-        return static::first();
+        return $this->gambar_pengantar
+            ? asset('storage/' . $this->gambar_pengantar)
+            : null;
     }
 }

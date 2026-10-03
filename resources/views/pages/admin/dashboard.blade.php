@@ -97,7 +97,9 @@
 @endsection
 
 @section('content')
-<div class="container-fluid px-4">
+{{-- .container = diberi margin-top setinggi header oleh Kaiadmin, .page-inner = padding isi --}}
+<div class="container">
+<div class="page-inner">
 
     {{-- ── WELCOME BANNER ── --}}
     <div class="welcome-banner">
@@ -497,7 +499,8 @@
 
     </div>
 
-</div>
+</div>{{-- end .page-inner --}}
+</div>{{-- end .container --}}
 @endsection
 
 @section('scripts')

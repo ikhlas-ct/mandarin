@@ -12,6 +12,7 @@
     .profile-hero::before { content:''; position:absolute; top:-60px; right:-60px; width:240px; height:240px; border-radius:50%; background:rgba(255,255,255,.07); }
     .profile-hero::after  { content:''; position:absolute; bottom:-80px; left:-40px; width:280px; height:280px; border-radius:50%; background:rgba(255,255,255,.05); }
     .hero-content { position: relative; z-index: 1; }
+    .hero-badge { background: rgba(255,255,255,.2) !important; color: #fff !important; }
 
 
     /* ── Avatar ── */
@@ -28,9 +29,9 @@
     .profile-tabs .nav-link.active { background: #1269db !important; color: #fff !important; box-shadow: 0 4px 12px rgba(18,105,219,.3); }
 
     /* ── Cards ── */
-    .profile-card { border: none; border-radius: 16px; box-shadow: 0 2px 14px rgba(0,0,0,.07); }
+    .profile-card { border: none; border-radius: 16px; box-shadow: 0 2px 14px rgba(0,0,0,.07); position: relative; z-index: 1; }
     .profile-card .card-header { background: #fff; border-bottom: 1px solid #f1f5f9; border-radius: 16px 16px 0 0 !important; padding: 16px 24px; font-weight: 700; font-size: .9rem; color: #1e293b; }
-    .tabs-card { border: none; border-radius: 16px; box-shadow: 0 2px 14px rgba(0,0,0,.07); overflow: hidden; }
+    .tabs-card { border: none; border-radius: 16px; box-shadow: 0 2px 14px rgba(0,0,0,.07); overflow: hidden; position: relative; z-index: 1; }
     .tabs-header { background: #fff; border-bottom: 1px solid #f1f5f9; padding: 12px 16px; }
     .tab-content { background: #fff; border-radius: 0 0 16px 16px; }
     .tab-pane { padding: 24px; }
@@ -127,13 +128,15 @@
 
     {{-- ── Flash ── --}}
     @if(session('success'))
-        <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
+        <div class="alert alert-success alert-dismissible alert-flash fade show d-flex align-items-center gap-2 mb-3" role="alert">
             <i class="fas fa-check-circle fs-5"></i><span>{{ session('success') }}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
         </div>
     @endif
     @if(session('error'))
-        <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+        <div class="alert alert-danger alert-dismissible alert-flash fade show d-flex align-items-center gap-2 mb-3" role="alert">
             <i class="fas fa-exclamation-circle fs-5"></i><span>{{ session('error') }}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
         </div>
     @endif
 
@@ -153,7 +156,7 @@
             <div class="text-white">
                 <h3 class="fw-bold mb-1" style="letter-spacing:-.3px;">{{ $admin->nama ?? $user->username }}</h3>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="badge bg-white bg-opacity-20 text-white fw-semibold" style="font-size:.8rem;">
+                    <span class="badge hero-badge fw-semibold" style="font-size:.8rem;">
                         <i class="fas fa-briefcase me-1"></i>{{ $admin->jabatan ?? 'Administrator' }}
                     </span>
                     <span class="badge {{ $user->isAktif() ? 'bg-success' : 'bg-secondary' }} fw-semibold" style="font-size:.8rem;">
@@ -317,9 +320,10 @@
                     <div class="tab-pane fade {{ $tabActive('edit') ? 'show active' : '' }}" id="pane-edit" role="tabpanel">
 
                         @if($hasEditErr)
-                            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert">
                                 <i class="fas fa-exclamation-circle"></i>
                                 <span>Terdapat kesalahan pada form. Periksa kembali isian Anda.</span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
                             </div>
                         @endif
 
@@ -391,9 +395,10 @@
                     <div class="tab-pane fade {{ $tabActive('password') ? 'show active' : '' }}" id="pane-pass" role="tabpanel">
 
                         @if($hasPassErr)
-                            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert">
                                 <i class="fas fa-exclamation-circle"></i>
                                 <span>{{ $errors->first('current_password') ?: $errors->first('password') }}</span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
                             </div>
                         @endif
 
