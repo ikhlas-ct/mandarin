@@ -61,6 +61,14 @@
                     </a>
                 </li>
 
+                <!-- Pelajar -->
+                <li class="nav-item {{ request()->routeIs('admin.pelajar*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.pelajar.index') }}">
+                        <i class="fas fa-user-graduate"></i>
+                        <p>Pelajar</p>
+                    </a>
+                </li>
+
                 <!-- Pengaturan Website -->
                 <li class="nav-item {{ request()->routeIs('admin.pengaturan*') ? 'active' : '' }}">
                     <a href="{{ route('admin.pengaturan') }}">

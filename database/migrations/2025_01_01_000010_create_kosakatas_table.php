@@ -12,13 +12,16 @@ return new class extends Migration
             $table->id();
             $table->foreignId('kategori_id')->nullable()->constrained('kategoris')->nullOnDelete();
             $table->foreignId('level_hsk_id')->nullable()->constrained('level_hsks')->nullOnDelete();
-            $table->string('hanzi', 20)->unique();                // hanzi tradisional
+            $table->string('hanzi', 20);                          // hanzi tradisional
             $table->string('pinyin', 60);
             $table->string('baca_indonesia', 60)->nullable();
             $table->string('english', 150)->nullable();
             $table->string('arti_indonesia', 150);
             $table->unsignedInteger('urutan')->default(0);
             $table->timestamps();
+
+            // Hanzi yang sama boleh muncul lagi selama pinyin-nya berbeda (行 xíng / háng).
+            $table->unique(['hanzi', 'pinyin']);
         });
     }
 

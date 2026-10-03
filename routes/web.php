@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\KategoriController as AdminKategoriController;
 use App\Http\Controllers\Admin\LevelHskController as AdminLevelHskController;
+use App\Http\Controllers\Admin\PelajarController as AdminPelajarController;
 use App\Http\Controllers\Admin\ProfilController as AdminProfilController;
 use App\Http\Controllers\Admin\WebsiteSettingController as AdminWebsiteSettingController;
 use App\Http\Controllers\Login\AuthController;
@@ -28,6 +29,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Tingkat HSK (CRUD: index, create, store, show, edit, update, destroy)
         Route::resource('admin/level-hsk', AdminLevelHskController::class)->names('admin.level-hsk');
+
+        // Pelajar + akun loginnya (CRUD: index, create, store, show, edit, update, destroy)
+        Route::resource('admin/pelajar', AdminPelajarController::class)->names('admin.pelajar');
 
         // Profil admin
         Route::get('/admin/profil', [AdminProfilController::class, 'index'])->name('admin.profil');

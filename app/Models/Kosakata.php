@@ -23,6 +23,13 @@ class Kosakata extends Model
         'urutan',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'urutan' => 'integer',
+        ];
+    }
+
     public function kategori(): BelongsTo
     {
         return $this->belongsTo(Kategori::class, 'kategori_id');
@@ -51,5 +58,22 @@ class Kosakata extends Model
     public function scopeUrut(Builder $query): Builder
     {
         return $query->orderBy('urutan')->orderBy('id');
+    }
+
+    /** Cari berdasarkan hanzi, pinyin, arti Indonesia, atau English. */
+    public function scopeCari(Builder $query, ?string $kata): Builder
+    {
+        $kata = trim((string) $kata);
+
+        if ($kata === '') {
+            return $query;
+        }
+
+        return $query->where(function (Builder $w) use ($kata) {
+            $w->where('hanzi', 'like', "%{$kata}%")
+              ->orWhere('pinyin', 'like', "%{$kata}%")
+              ->orWhere('arti_indonesia', 'like', "%{$kata}%")
+              ->orWhere('english', 'like', "%{$kata}%");
+        });
     }
 }
