@@ -69,6 +69,14 @@
                     </a>
                 </li>
 
+                <!-- Paragraf -->
+                <li class="nav-item {{ request()->routeIs('admin.paragraf*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.paragraf.index') }}">
+                        <i class="fas fa-paragraph"></i>
+                        <p>Paragraf</p>
+                    </a>
+                </li>
+
                 <!-- Pelajar -->
                 <li class="nav-item {{ request()->routeIs('admin.pelajar*') ? 'active' : '' }}">
                     <a href="{{ route('admin.pelajar.index') }}">

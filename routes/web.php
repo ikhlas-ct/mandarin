@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\KategoriController as AdminKategoriController;
 use App\Http\Controllers\Admin\KosakataController as AdminKosakataController;
 use App\Http\Controllers\Admin\LevelHskController as AdminLevelHskController;
+use App\Http\Controllers\Admin\ParagrafController as AdminParagrafController;
 use App\Http\Controllers\Admin\PelajarController as AdminPelajarController;
 use App\Http\Controllers\Admin\ProfilController as AdminProfilController;
 use App\Http\Controllers\Admin\WebsiteSettingController as AdminWebsiteSettingController;
@@ -39,6 +40,17 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('admin/kosakata', AdminKosakataController::class)
             ->names('admin.kosakata')
             ->parameters(['kosakata' => 'kosakata']);
+
+        // Paragraf (CRUD) + upload/hapus gambar Summernote + import Excel
+        // Route import, template, dan gambar HARUS di atas resource, supaya tidak dianggap {paragraf}.
+        Route::get('/admin/paragraf/import', [AdminParagrafController::class, 'import'])->name('admin.paragraf.import');
+        Route::post('/admin/paragraf/import', [AdminParagrafController::class, 'importStore'])->name('admin.paragraf.import.store');
+        Route::get('/admin/paragraf/template', [AdminParagrafController::class, 'template'])->name('admin.paragraf.template');
+        Route::post('/admin/paragraf/upload-gambar', [AdminParagrafController::class, 'uploadGambar'])->name('admin.paragraf.upload-gambar');
+        Route::post('/admin/paragraf/hapus-gambar', [AdminParagrafController::class, 'hapusGambar'])->name('admin.paragraf.hapus-gambar');
+        Route::resource('admin/paragraf', AdminParagrafController::class)
+            ->names('admin.paragraf')
+            ->parameters(['paragraf' => 'paragraf']);
 
         // Pelajar + akun loginnya (CRUD: index, create, store, show, edit, update, destroy)
         Route::resource('admin/pelajar', AdminPelajarController::class)->names('admin.pelajar');
