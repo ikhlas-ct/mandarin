@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
+class GrupKosakata extends Model
+{
+    protected $table = 'grup_kosakatas';
+
+    protected $fillable = [
+        'nama',
+        'keterangan',
+    ];
+
+    public function kosakatas(): BelongsToMany
+    {
+        return $this->belongsToMany(Kosakata::class, 'grup_kosakata_kosakata', 'grup_kosakata_id', 'kosakata_id');
+    }
+}

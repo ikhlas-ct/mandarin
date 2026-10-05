@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\KategoriController as AdminKategoriController;
+use App\Http\Controllers\Admin\GrupKosakataController as AdminGrupKosakataController;
 use App\Http\Controllers\Admin\KosakataController as AdminKosakataController;
 use App\Http\Controllers\Admin\LevelHskController as AdminLevelHskController;
 use App\Http\Controllers\Admin\ParagrafController as AdminParagrafController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\Admin\ProfilController as AdminProfilController;
 use App\Http\Controllers\Admin\WebsiteSettingController as AdminWebsiteSettingController;
 use App\Http\Controllers\Login\AuthController;
 use App\Http\Controllers\Pelajar\DashboardController as PelajarDashboardController;
+use App\Http\Controllers\PelajarFlashcardController;
+use App\Http\Controllers\PelajarKosakataController;
 use Illuminate\Support\Facades\Route;
 
 // =================== Auth Routes ===================
@@ -41,6 +44,14 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('admin/kosakata', AdminKosakataController::class)
             ->names('admin.kosakata')
             ->parameters(['kosakata' => 'kosakata']);
+
+        // Grup kosakata + generator soal latihan (pilih kata manual -> buat soal A/B/C/D otomatis)
+        Route::get('/admin/grup-kosakata', [AdminGrupKosakataController::class, 'index'])->name('admin.grup-kosakata.index');
+        Route::post('/admin/grup-kosakata', [AdminGrupKosakataController::class, 'store'])->name('admin.grup-kosakata.store');
+        Route::delete('/admin/grup-kosakata/{grup}', [AdminGrupKosakataController::class, 'destroy'])->name('admin.grup-kosakata.destroy');
+        Route::post('/admin/grup-kosakata/{grup}/generate', [AdminGrupKosakataController::class, 'generate'])->name('admin.grup-kosakata.generate');
+        // Jaga-jaga kalau URL generate terbuka lewat GET (refresh/history): arahkan ke halaman utama.
+        Route::get('/admin/grup-kosakata/{grup}/generate', fn () => redirect()->route('admin.grup-kosakata.index'));
 
         // Paragraf (CRUD) + upload/hapus gambar Summernote + import Excel
         // Route import, template, dan gambar HARUS di atas resource, supaya tidak dianggap {paragraf}.
@@ -74,5 +85,15 @@ Route::middleware(['auth'])->group(function () {
 
         // Dashboard
         Route::get('/pelajar/dashboard', [PelajarDashboardController::class, 'index'])->name('pelajar.dashboard');
+
+        // Kosakata (pelajar hanya melihat + memindahkan status hafalan; tanpa create/edit/import)
+        Route::get('/pelajar/kosakata', [PelajarKosakataController::class, 'index'])->name('pelajar.kosakata.index');
+        Route::post('/pelajar/kosakata/status', [PelajarKosakataController::class, 'updateStatus'])->name('pelajar.kosakata.status');
+        Route::get('/pelajar/kosakata/{kosakata}', [PelajarKosakataController::class, 'show'])->name('pelajar.kosakata.show');
+
+        // Flashcard: review harian (kata jatuh tempo) + latihan bebas
+        Route::get('/pelajar/flashcard', [PelajarFlashcardController::class, 'index'])->name('pelajar.flashcard.index');
+        Route::get('/pelajar/flashcard/mulai', [PelajarFlashcardController::class, 'mulai'])->name('pelajar.flashcard.mulai');
+        Route::post('/pelajar/flashcard/jawab', [PelajarFlashcardController::class, 'jawab'])->name('pelajar.flashcard.jawab');
     });
 });

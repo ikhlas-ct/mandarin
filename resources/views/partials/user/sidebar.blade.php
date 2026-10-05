@@ -70,6 +70,14 @@
                     </a>
                 </li>
 
+                <!-- Grup Kosakata & Generator Soal -->
+                <li class="nav-item {{ request()->routeIs('admin.grup-kosakata*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.grup-kosakata.index') }}">
+                        <i class="fas fa-object-group"></i>
+                        <p>Grup &amp; Soal Latihan</p>
+                    </a>
+                </li>
+
                 <!-- Paragraf -->
                 <li class="nav-item {{ request()->routeIs('admin.paragraf*') ? 'active' : '' }}">
                     <a href="{{ route('admin.paragraf.index') }}">
@@ -109,6 +117,22 @@
                     <a href="{{ route('pelajar.dashboard') }}">
                         <i class="fas fa-tachometer-alt"></i>
                         <p>Dashboard</p>
+                    </a>
+                </li>
+
+                <!-- Kosakata -->
+                <li class="nav-item {{ request()->routeIs('pelajar.kosakata*') ? 'active' : '' }}">
+                    <a href="{{ route('pelajar.kosakata.index') }}">
+                        <i class="fas fa-language"></i>
+                        <p>Kosakata</p>
+                    </a>
+                </li>
+
+                <!-- Flashcard -->
+                <li class="nav-item {{ request()->routeIs('pelajar.flashcard*') ? 'active' : '' }}">
+                    <a href="{{ route('pelajar.flashcard.index') }}">
+                        <i class="fas fa-clone"></i>
+                        <p>Flashcard</p>
                     </a>
                 </li>
 

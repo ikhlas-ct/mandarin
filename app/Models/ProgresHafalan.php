@@ -94,4 +94,35 @@ class ProgresHafalan extends Model
             ]);
         });
     }
+
+    /**
+     * Catat satu jawaban flashcard ("Lupa" / "Ingat") sekaligus memindah status:
+     * - Lupa  -> lupa_dan_ingat,   review besok (mulai 00:00)
+     * - Ingat -> ingat_sepenuhnya, review 7 hari lagi
+     * Riwayat mencatat status SEBELUM dipindah. Sumber memakai 'popup'
+     * karena enum riwayat_reviews.sumber hanya mengenal 'popup' dan 'soal'.
+     */
+    public function catatKartu(bool $ingat): void
+    {
+        DB::transaction(function () use ($ingat) {
+            $statusLama = $this->status;
+
+            $this->update([
+                'status'            => $ingat ? self::INGAT_SEPENUHNYA : self::LUPA_DAN_INGAT,
+                'terakhir_diulang'  => now(),
+                'jumlah_ulang'      => (int) $this->jumlah_ulang + 1,
+                'benar_beruntun'    => $ingat ? (int) $this->benar_beruntun + 1 : 0,
+                'review_berikutnya' => $ingat ? now()->addDays(7) : now()->addDay()->startOfDay(),
+            ]);
+
+            RiwayatReview::create([
+                'pelajar_id'         => $this->pelajar_id,
+                'kosakata_id'        => $this->kosakata_id,
+                'sumber'             => 'popup',
+                'status_saat_review' => $statusLama,
+                'benar'              => $ingat,
+                'direview_pada'      => now(),
+            ]);
+        });
+    }
 }
