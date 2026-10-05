@@ -2,8 +2,9 @@
 @php
     $authUser = auth()->user();
 
-    // Hanya route admin yang tersedia saat ini.
-    $dashboardRoute = $authUser->isAdmin() ? route('admin.dashboard') : '#';
+    $dashboardRoute = $authUser->isAdmin()
+        ? route('admin.dashboard')
+        : ($authUser->isPelajar() ? route('pelajar.dashboard') : '#');
 @endphp
 
 <div class="sidebar-logo">
@@ -101,6 +102,26 @@
                     </a>
                 </li>
 
+            @elseif ($authUser->isPelajar())
+
+                <!-- Dashboard -->
+                <li class="nav-item {{ request()->routeIs('pelajar.dashboard') ? 'active' : '' }}">
+                    <a href="{{ route('pelajar.dashboard') }}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+
+                <!-- Profil Saya (muncul otomatis setelah route pelajar.profil dibuat) -->
+                @if (\Illuminate\Support\Facades\Route::has('pelajar.profil'))
+                    <li class="nav-item {{ request()->routeIs('pelajar.profil*') ? 'active' : '' }}">
+                        <a href="{{ route('pelajar.profil') }}">
+                            <i class="fas fa-user-circle"></i>
+                            <p>{{ $authUser->pelajar?->nama ?? 'Profil Saya' }}</p>
+                        </a>
+                    </li>
+                @endif
+
             @endif
 
             <!-- Logout -->
@@ -118,3 +139,4 @@
         </ul>
     </div>
 </div>
+    

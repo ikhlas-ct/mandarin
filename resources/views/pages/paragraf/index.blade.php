@@ -259,6 +259,7 @@
                                             </span>
                                             @if ($adaGbr)<i class="fas fa-image media-ico" title="Berisi gambar"></i>@endif
                                             @if ($adaVid)<i class="fas fa-video media-ico" title="Berisi video"></i>@endif
+                                            @if ($paragraf->audio)<i class="fas fa-volume-up media-ico" title="Ada audio"></i>@endif
                                         </td>
 
                                         <td>

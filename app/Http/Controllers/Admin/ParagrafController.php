@@ -5,8 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Paragraf;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -19,6 +23,24 @@ class ParagrafController extends Controller
 {
     /** Folder gambar Summernote di disk "public" (storage/app/public/paragraf/summernote). */
     private const FOLDER = 'paragraf/summernote';
+
+    /** Folder audio paragraf di disk "public" (storage/app/public/paragraf/audio). */
+    private const FOLDER_AUDIO = 'paragraf/audio';
+
+    /** Suara Azure yang boleh dipilih (nama suara => label). */
+    private const SUARA_AZURE = [
+        'zh-CN-XiaoxiaoNeural'  => 'Xiaoxiao - perempuan, Mandarin standar',
+        'zh-CN-YunxiNeural'     => 'Yunxi - laki-laki, Mandarin standar',
+        'zh-TW-HsiaoChenNeural' => 'HsiaoChen - perempuan, logat Taiwan',
+        'zh-TW-YunJheNeural'    => 'YunJhe - laki-laki, logat Taiwan',
+    ];
+
+    /** Kecepatan bicara (nilai prosody rate => label). */
+    private const LAJU_AZURE = [
+        '0%'   => 'Normal',
+        '-15%' => 'Agak pelan',
+        '-30%' => 'Pelan',
+    ];
 
     /** Host iframe (video) yang boleh tampil di penjelasan. */
     private const HOST_VIDEO = [
@@ -79,18 +101,20 @@ class ParagrafController extends Controller
 
     public function create()
     {
-        return view('pages.paragraf.create');
+        return view('pages.paragraf.create', $this->dataAudio());
     }
 
     public function store(Request $request)
     {
         $data = $this->validasi($request);
-        $data['penjelasan_tata_bahasa'] = $this->bersihkan($data['penjelasan_tata_bahasa'] ?? null);
 
-        Paragraf::create($data);
+        $paragraf = Paragraf::create($this->kolom($data));
+        $galatAudio = $this->simpanAudio($request, $paragraf);
 
-        return redirect()->route('admin.paragraf.index')
+        $balik = redirect()->route('admin.paragraf.index')
             ->with('success', 'Paragraf berhasil ditambahkan.');
+
+        return $galatAudio ? $balik->with('error', $galatAudio) : $balik;
     }
 
     public function show(Paragraf $paragraf)
@@ -100,28 +124,39 @@ class ParagrafController extends Controller
 
     public function edit(Paragraf $paragraf)
     {
-        return view('pages.paragraf.edit', compact('paragraf'));
+        return view('pages.paragraf.edit', ['paragraf' => $paragraf] + $this->dataAudio());
     }
 
     public function update(Request $request, Paragraf $paragraf)
     {
         $data = $this->validasi($request, $paragraf);
-        $data['penjelasan_tata_bahasa'] = $this->bersihkan($data['penjelasan_tata_bahasa'] ?? null);
+        $kolom = $this->kolom($data);
 
-        $gambarLama = $this->gambarDari($paragraf->penjelasan_tata_bahasa);
+        $gambarLama   = $this->gambarDari($paragraf->penjelasan_tata_bahasa);
+        $hanziBerubah = $kolom['hanzi'] !== $paragraf->hanzi;
 
-        $paragraf->update($data);
+        $paragraf->update($kolom);
 
         // Gambar yang sudah dibuang dari editor ikut dihapus dari storage.
         $this->hapusFile(array_diff($gambarLama, $this->gambarDari($paragraf->penjelasan_tata_bahasa)));
 
-        return redirect()->route('admin.paragraf.index')
-            ->with('success', 'Paragraf berhasil diperbarui.');
+        $galatAudio = $this->simpanAudio($request, $paragraf);
+
+        $pesan = 'Paragraf berhasil diperbarui.';
+        if ($hanziBerubah && $paragraf->audio
+            && ! $request->hasFile('audio_file') && ! $request->boolean('buat_audio') && ! $request->boolean('hapus_audio')) {
+            $pesan .= ' Teks hanzi berubah, jadi audio lama mungkin tidak cocok lagi. Buat ulang atau ganti audionya.';
+        }
+
+        $balik = redirect()->route('admin.paragraf.index')->with('success', $pesan);
+
+        return $galatAudio ? $balik->with('error', $galatAudio) : $balik;
     }
 
     public function destroy(Paragraf $paragraf)
     {
         $this->hapusFile($this->gambarDari($paragraf->penjelasan_tata_bahasa));
+        $this->hapusAudio($paragraf->audio);
         $paragraf->delete();
 
         return redirect()->route('admin.paragraf.index')
@@ -339,6 +374,11 @@ class ParagrafController extends Controller
             'pinyin'                 => ['required', 'string'],
             'arti_indonesia'         => ['required', 'string'],
             'penjelasan_tata_bahasa' => ['nullable', 'string'],
+            'audio_file'             => ['nullable', 'file', 'mimes:mp3,mpga,wav,m4a,ogg', 'max:10240'],
+            'buat_audio'             => ['nullable', 'boolean'],
+            'hapus_audio'            => ['nullable', 'boolean'],
+            'suara_azure'            => ['nullable', Rule::in(array_keys(self::SUARA_AZURE))],
+            'laju_azure'             => ['nullable', Rule::in(array_keys(self::LAJU_AZURE))],
         ], [
             'judul.required'          => 'Judul wajib diisi.',
             'judul.max'               => 'Judul maksimal 100 karakter.',
@@ -346,7 +386,133 @@ class ParagrafController extends Controller
             'hanzi.required'          => 'Teks hanzi wajib diisi.',
             'pinyin.required'         => 'Pinyin wajib diisi.',
             'arti_indonesia.required' => 'Arti Indonesia wajib diisi.',
+            'audio_file.mimes'        => 'Audio harus berformat mp3, wav, m4a, atau ogg.',
+            'audio_file.max'          => 'Ukuran audio maksimal 10 MB.',
+            'audio_file.uploaded'     => 'Audio gagal diunggah. Ukuran file mungkin melebihi batas upload_max_filesize di php.ini.',
         ]);
+    }
+
+    /* =====================================================================
+     |  AUDIO (UPLOAD / AZURE)
+     * ===================================================================*/
+
+    /** Data tambahan untuk form create & edit. */
+    private function dataAudio(): array
+    {
+        return [
+            'suaraAzure' => self::SUARA_AZURE,
+            'lajuAzure'  => self::LAJU_AZURE,
+            'azureSiap'  => filled(config('services.azure_speech.key')) && filled(config('services.azure_speech.region')),
+        ];
+    }
+
+    /** Hanya kolom tabel (tanpa field form audio), penjelasan sudah dibersihkan. */
+    private function kolom(array $data): array
+    {
+        $kolom = Arr::only($data, ['judul', 'hanzi', 'pinyin', 'arti_indonesia', 'penjelasan_tata_bahasa']);
+        $kolom['penjelasan_tata_bahasa'] = $this->bersihkan($kolom['penjelasan_tata_bahasa'] ?? null);
+
+        return $kolom;
+    }
+
+    /**
+     * Simpan audio sesuai pilihan di form. Urutan prioritas:
+     * file yang diunggah > buat otomatis (Azure) > hapus audio.
+     * Mengembalikan pesan galat (string) kalau gagal, atau null kalau aman.
+     * Paragrafnya sendiri sudah tersimpan sebelum fungsi ini dipanggil.
+     */
+    private function simpanAudio(Request $request, Paragraf $paragraf): ?string
+    {
+        $lama = $paragraf->audio;
+
+        if ($request->hasFile('audio_file')) {
+            $file = $request->file('audio_file');
+            $path = $file->storeAs(self::FOLDER_AUDIO, Str::uuid() . '.' . $file->extension(), 'public');
+        } elseif ($request->boolean('buat_audio')) {
+            try {
+                $biner = $this->suaraAzure(
+                    $paragraf->hanzi,
+                    $request->input('suara_azure', array_key_first(self::SUARA_AZURE)),
+                    $request->input('laju_azure', '0%')
+                );
+            } catch (\RuntimeException $e) {
+                return 'Paragraf tersimpan, tetapi audio gagal dibuat: ' . $e->getMessage();
+            }
+
+            $path = self::FOLDER_AUDIO . '/' . Str::uuid() . '.mp3';
+            Storage::disk('public')->put($path, $biner);
+        } elseif ($request->boolean('hapus_audio') && $lama) {
+            $this->hapusAudio($lama);
+            $paragraf->update(['audio' => null]);
+
+            return null;
+        } else {
+            return null;
+        }
+
+        $paragraf->update(['audio' => $path]);
+        $this->hapusAudio($lama); // audio lama diganti
+
+        return null;
+    }
+
+    /** Minta Azure AI Speech membacakan teks, hasilnya biner mp3. */
+    private function suaraAzure(string $teks, string $suara, string $laju): string
+    {
+        $key    = config('services.azure_speech.key');
+        $region = config('services.azure_speech.region');
+
+        if (! $key || ! $region) {
+            throw new \RuntimeException('AZURE_SPEECH_KEY / AZURE_SPEECH_REGION belum diisi di .env.');
+        }
+        if (! array_key_exists($suara, self::SUARA_AZURE) || ! array_key_exists($laju, self::LAJU_AZURE)) {
+            throw new \RuntimeException('Pilihan suara atau kecepatan tidak dikenal.');
+        }
+
+        $teks = trim(preg_replace('/\s+/u', ' ', $teks));
+        if ($teks === '') {
+            throw new \RuntimeException('Teks hanzi kosong.');
+        }
+        if (mb_strlen($teks) > 3000) {
+            throw new \RuntimeException('Teks hanzi terlalu panjang (maksimal 3000 karakter).');
+        }
+
+        $bahasa = substr($suara, 0, 5); // zh-CN / zh-TW
+        $ssml = "<speak version='1.0' xml:lang='{$bahasa}'><voice name='{$suara}'><prosody rate='{$laju}'>"
+            . htmlspecialchars($teks, ENT_XML1 | ENT_QUOTES, 'UTF-8')
+            . '</prosody></voice></speak>';
+
+        try {
+            $res = Http::timeout(30)
+                ->withHeaders([
+                    'Ocp-Apim-Subscription-Key' => $key,
+                    'X-Microsoft-OutputFormat'  => 'audio-24khz-48kbitrate-mono-mp3',
+                    'User-Agent'                => 'laravel-belajar-mandarin',
+                ])
+                ->withBody($ssml, 'application/ssml+xml')
+                ->post("https://{$region}.tts.speech.microsoft.com/cognitiveservices/v1");
+        } catch (ConnectionException $e) {
+            throw new \RuntimeException('Server tidak bisa terhubung ke Azure. Periksa koneksi internet server.');
+        }
+
+        if ($res->failed()) {
+            Log::warning('Azure TTS gagal', ['status' => $res->status(), 'body' => mb_substr($res->body(), 0, 300)]);
+
+            throw new \RuntimeException(match ($res->status()) {
+                401, 403 => 'Key Azure ditolak. Periksa AZURE_SPEECH_KEY dan region di .env.',
+                429      => 'Batas pemakaian Azure tercapai. Coba lagi nanti.',
+                default  => 'Azure menolak permintaan (kode ' . $res->status() . ').',
+            });
+        }
+
+        return $res->body();
+    }
+
+    private function hapusAudio(?string $path): void
+    {
+        if ($path && Str::startsWith($path, self::FOLDER_AUDIO . '/')) {
+            Storage::disk('public')->delete(self::FOLDER_AUDIO . '/' . basename($path));
+        }
     }
 
     /**

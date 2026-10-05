@@ -142,6 +142,15 @@
 
                     {{-- Pemutar suara paragraf utuh --}}
                     <div class="player-utuh mb-3">
+                        @if ($paragraf->audio_url)
+                            <div class="mb-3 pb-3" style="border-bottom:1px dashed #bfdbfe;">
+                                <div class="blok-label"><i class="fas fa-microphone-alt me-1"></i>Rekaman suara utuh</div>
+                                <audio id="audio-utuh" controls preload="none" class="w-100" src="{{ $paragraf->audio_url }}">
+                                    Browser ini tidak mendukung pemutar audio.
+                                </audio>
+                            </div>
+                            <div class="blok-label">Per kalimat dengan suara browser</div>
+                        @endif
                         <div class="d-flex align-items-center flex-wrap gap-2">
                             <button type="button" class="btn btn-primary btn-sm" id="btn-putar">
                                 <i class="fas fa-play me-1"></i> Putar paragraf utuh
@@ -444,6 +453,7 @@
             const btnPutar = document.getElementById('btn-putar');
             const btnJeda = document.getElementById('btn-jeda');
             const btnStop = document.getElementById('btn-stop');
+            const audioUtuh = document.getElementById('audio-utuh'); // ada kalau paragraf punya file audio
             const barPutar = document.getElementById('bar-putar');
             const labelPutar = document.getElementById('label-putar');
             const LABEL_AWAL = labelPutar.textContent;
@@ -578,6 +588,7 @@
 
             btnPutar.addEventListener('click', () => {
                 if (status === 'putar' || !suaraSiap()) return;
+                if (audioUtuh) audioUtuh.pause();
                 hentiSuara();
                 status = 'putar';
                 perbaruiTombol();
@@ -592,17 +603,23 @@
                 perbaruiTombol();
             });
 
-            btnStop.addEventListener('click', () => {
+            function hentikanPemutar() {
                 hentiSuara();
                 status = 'diam';
                 posisi = 0;
                 isiProgress(0, LABEL_AWAL);
                 perbaruiTombol();
-            });
+            }
+
+            btnStop.addEventListener('click', hentikanPemutar);
+
+            // Rekaman dan suara browser tidak boleh jalan bersamaan.
+            if (audioUtuh) audioUtuh.addEventListener('play', hentikanPemutar);
 
             // Dengar satu kalimat saja (tombol speaker di tiap kalimat). Menghentikan pemutar utuh.
             function ucapkanSatu(teks, n) {
                 if (!suaraSiap()) return;
+                if (audioUtuh) audioUtuh.pause();
                 hentiSuara();
                 if (status !== 'diam') {
                     status = 'diam';

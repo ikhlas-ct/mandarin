@@ -83,7 +83,7 @@
         </div>
 
         <div class="page-inner">
-            <form action="{{ route('admin.paragraf.store') }}" method="POST" novalidate>
+            <form action="{{ route('admin.paragraf.store') }}" method="POST" enctype="multipart/form-data" novalidate>
                 @csrf
 
                 <div class="row g-4">
@@ -139,7 +139,64 @@
                             </div>
                         </div>
                         
-                        {{-- ===== Penjelasan tata bahasa (Summernote) ===== --}}
+                        {{-- ===== Suara paragraf ===== --}}
+                        <div class="card form-card mb-4">
+                            <div class="card-body">
+                                <div class="section-divider"><i class="fas fa-volume-up me-2"></i>Suara Paragraf <span class="text-muted fw-normal">(opsional)</span></div>
+                        
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="audio_file" class="form-label">Unggah rekaman</label>
+                                        <input type="file" id="audio_file" name="audio_file" accept=".mp3,.wav,.m4a,.ogg,audio/*"
+                                            class="form-control @error('audio_file') is-invalid @enderror">
+                                        @error('audio_file')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <div class="form-text">Format mp3, wav, m4a, atau ogg, maksimal 10 MB. Cocok untuk rekaman penutur asli.</div>
+                                    </div>
+                        
+                                    <div class="col-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="buat_audio" id="buat_audio" value="1"
+                                                data-siap="{{ $azureSiap ? '1' : '0' }}"
+                                                {{ old('buat_audio') ? 'checked' : '' }} {{ $azureSiap ? '' : 'disabled' }}>
+                                            <label class="form-check-label" for="buat_audio">Buat suara otomatis (Azure) saat disimpan</label>
+                                        </div>
+                                        @unless ($azureSiap)
+                                            <div class="form-text text-warning">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>AZURE_SPEECH_KEY dan AZURE_SPEECH_REGION belum diisi di file .env.
+                                            </div>
+                                        @endunless
+                        
+                                        <div id="opsi-azure" class="row g-2 mt-1 d-none">
+                                            <div class="col-md-7">
+                                                <label for="suara_azure" class="form-label">Suara</label>
+                                                <select id="suara_azure" name="suara_azure" class="form-control">
+                                                    @foreach ($suaraAzure as $kode => $label)
+                                                        <option value="{{ $kode }}" {{ old('suara_azure', array_key_first($suaraAzure)) === $kode ? 'selected' : '' }}>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <label for="laju_azure" class="form-label">Kecepatan</label>
+                                                <select id="laju_azure" name="laju_azure" class="form-control">
+                                                    @foreach ($lajuAzure as $kode => $label)
+                                                        <option value="{{ $kode }}" {{ old('laju_azure', '0%') === $kode ? 'selected' : '' }}>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                        
+                                        <div class="form-text">
+                                            Audio dibuat dari teks hanzi satu kali saat menyimpan, lalu disimpan sebagai mp3 (pelajar yang memutar ulang tidak memakai kuota Azure).
+                                            Kalau file rekaman juga dipilih, file itulah yang dipakai. Audio baru menggantikan audio lama.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+{{-- ===== Penjelasan tata bahasa (Summernote) ===== --}}
                         <div class="card form-card mb-4">
                             <div class="card-body">
                                 <div class="section-divider"><i class="fas fa-book-open me-2"></i>Penjelasan Tata Bahasa</div>
@@ -166,7 +223,8 @@
                                 <ul class="text-muted ps-3 mb-0" style="font-size:.83rem;">
                                     <li class="mb-2">Judul, hanzi, pinyin, dan arti Indonesia wajib diisi. Judul tidak boleh sama dengan paragraf lain.</li>
                                     <li class="mb-2">Goresan dan suara otomatis tersedia di halaman Detail dari teks hanzi.</li>
-                                    <li>Penjelasan boleh berisi gambar dan link video.</li>
+                                    <li class="mb-2">Penjelasan boleh berisi gambar dan link video.</li>
+                                    <li>Suara: unggah rekaman sendiri, atau centang buat otomatis dengan Azure.</li>
                                 </ul>
                             </div>
                         </div>
@@ -317,5 +375,26 @@
                 }
             });
         })(window.jQuery);
+    </script>
+
+    <script>
+        // Opsi suara otomatis: tampil hanya kalau dicentang, dan dimatikan kalau file rekaman dipilih.
+        (function () {
+            const cek = document.getElementById('buat_audio');
+            const opsi = document.getElementById('opsi-azure');
+            const file = document.getElementById('audio_file');
+            if (!cek || !opsi || !file) return;
+
+            function sinkron() {
+                const adaFile = file.files.length > 0;
+                if (adaFile) cek.checked = false;
+                cek.disabled = adaFile || cek.dataset.siap !== '1';
+                opsi.classList.toggle('d-none', !cek.checked);
+            }
+
+            cek.addEventListener('change', sinkron);
+            file.addEventListener('change', sinkron);
+            sinkron();
+        })();
     </script>
 @endsection

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PelajarController as AdminPelajarController;
 use App\Http\Controllers\Admin\ProfilController as AdminProfilController;
 use App\Http\Controllers\Admin\WebsiteSettingController as AdminWebsiteSettingController;
 use App\Http\Controllers\Login\AuthController;
+use App\Http\Controllers\Pelajar\DashboardController as PelajarDashboardController;
 use Illuminate\Support\Facades\Route;
 
 // =================== Auth Routes ===================
@@ -70,6 +71,8 @@ Route::middleware(['auth'])->group(function () {
 
     // =================== PELAJAR ===================
     Route::middleware('role:pelajar')->group(function () {
-        //
+
+        // Dashboard
+        Route::get('/pelajar/dashboard', [PelajarDashboardController::class, 'index'])->name('pelajar.dashboard');
     });
 });
