@@ -20,6 +20,7 @@ class Kosakata extends Model
         'baca_indonesia',
         'english',
         'arti_indonesia',
+        'kegunaan',
         'urutan',
     ];
 

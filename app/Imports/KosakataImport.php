@@ -124,7 +124,7 @@ class KosakataImport implements Import, WithMultipleSheets, SkipsUnknownSheets
             $nomor = $i + 2; // baris 1 = judul kolom
             $d = $this->ambil($row, [
                 'hanzi', 'pinyin', 'arti_indonesia', 'baca_indonesia',
-                'english', 'kategori', 'level_hsk', 'urutan',
+                'english', 'kegunaan', 'kategori', 'level_hsk', 'urutan',
             ]);
 
             if ($this->kosong($d)) {
@@ -138,6 +138,7 @@ class KosakataImport implements Import, WithMultipleSheets, SkipsUnknownSheets
                 'arti_indonesia' => ['required', 'string', 'max:150'],
                 'baca_indonesia' => ['nullable', 'string', 'max:60'],
                 'english'        => ['nullable', 'string', 'max:150'],
+                'kegunaan'       => ['nullable', 'string', 'max:2000'],
                 'kategori'       => ['nullable', 'string', 'max:50'],
                 'level_hsk'      => ['nullable', 'integer'],
                 'urutan'         => ['nullable', 'integer', 'min:0'],
@@ -202,7 +203,8 @@ class KosakataImport implements Import, WithMultipleSheets, SkipsUnknownSheets
             'arti_indonesia' => $d['arti_indonesia'],
             'baca_indonesia' => $d['baca_indonesia'],
             'english'        => $d['english'],
-            'kategori_id'    => $d['kategori'] !== null ? $this->idKategori($d['kategori']) : null,
+            'kegunaan'       => $d['kegunaan'],
+            'kategori_id'   => $d['kategori'] !== null ? $this->idKategori($d['kategori']) : null,
             'level_hsk_id'   => $d['level_hsk'] !== null ? $this->level[(int) $d['level_hsk']] : null,
             'urutan'         => $d['urutan'] !== null ? (int) $d['urutan'] : null,
         ];

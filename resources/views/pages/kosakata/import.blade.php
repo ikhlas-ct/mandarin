@@ -206,6 +206,7 @@
                                         <tr><td><code>arti_indonesia</code></td><td>Ya</td><td></td></tr>
                                         <tr><td><code>baca_indonesia</code></td><td>-</td><td></td></tr>
                                         <tr><td><code>english</code></td><td>-</td><td></td></tr>
+                                        <tr><td><code>kegunaan</code></td><td>-</td><td>Penjelasan kegunaan kata (maks. 2000 karakter)</td></tr>
                                         <tr><td><code>kategori</code></td><td>-</td><td>Nama kategori; dibuat otomatis kalau belum ada</td></tr>
                                         <tr><td><code>level_hsk</code></td><td>-</td>
                                             <td>

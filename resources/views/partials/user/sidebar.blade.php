@@ -136,6 +136,22 @@
                     </a>
                 </li>
 
+                <!-- Latihan & Ujian -->
+                <li class="nav-item {{ request()->routeIs('pelajar.latihan*', 'pelajar.pengerjaan*') ? 'active' : '' }}">
+                    <a href="{{ route('pelajar.latihan.index') }}">
+                        <i class="fas fa-tasks"></i>
+                        <p>Latihan &amp; Ujian</p>
+                    </a>
+                </li>
+
+                <!-- Hafalan Saya -->
+                <li class="nav-item {{ request()->routeIs('pelajar.hafalan*') ? 'active' : '' }}">
+                    <a href="{{ route('pelajar.hafalan.index') }}">
+                        <i class="fas fa-chart-pie"></i>
+                        <p>Hafalan Saya</p>
+                    </a>
+                </li>
+
                 <!-- Profil Saya (muncul otomatis setelah route pelajar.profil dibuat) -->
                 @if (\Illuminate\Support\Facades\Route::has('pelajar.profil'))
                     <li class="nav-item {{ request()->routeIs('pelajar.profil*') ? 'active' : '' }}">

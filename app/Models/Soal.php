@@ -17,6 +17,7 @@ class Soal extends Model
 
     protected $fillable = [
         'grup_soal_id',
+        'kosakata_id',
         'bagian',
         'urutan',
         'poin',
@@ -44,6 +45,12 @@ class Soal extends Model
         return $this->belongsTo(GrupSoal::class, 'grup_soal_id');
     }
 
+    /** Kosakata yang diujikan soal ini (null untuk soal manual yang tidak terkait satu kata). */
+    public function kosakata(): BelongsTo
+    {
+        return $this->belongsTo(Kosakata::class, 'kosakata_id');
+    }
+
     public function jawabanPelajars(): HasMany
     {
         return $this->hasMany(JawabanPelajar::class, 'soal_id');
@@ -66,6 +73,19 @@ class Soal extends Model
         return $this->audio
             ? asset('storage/' . $this->audio)
             : null;
+    }
+
+    /**
+     * Teks yang diucapkan TTS browser untuk soal listening (dipakai kalau belum ada file audio).
+     * Diambil dari hanzi kosakata yang diujikan; null kalau bukan listening / tidak terkait kata.
+     */
+    public function getTeksSuaraAttribute(): ?string
+    {
+        if ($this->bagian !== self::LISTENING) {
+            return null;
+        }
+
+        return $this->kosakata?->hanzi;
     }
 
     /** Pilihan jawaban dalam bentuk ['A' => ..., 'B' => ..., 'C' => ..., 'D' => ...]. */

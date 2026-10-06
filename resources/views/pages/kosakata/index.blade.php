@@ -271,6 +271,9 @@
                                             @if ($kosakata->english)
                                                 <div class="text-muted" style="font-size:.75rem;">{{ $kosakata->english }}</div>
                                             @endif
+                                            @if ($kosakata->kegunaan)
+                                                <div class="text-muted fst-italic" style="font-size:.75rem;" title="{{ $kosakata->kegunaan }}">{{ \Illuminate\Support\Str::limit($kosakata->kegunaan, 70) }}</div>
+                                            @endif
                                         </td>
 
                                         <td class="text-muted">{{ $kosakata->kategori->nama ?? '-' }}</td>

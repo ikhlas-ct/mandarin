@@ -55,6 +55,7 @@ class KosakataRequest extends FormRequest
             'baca_indonesia' => ['nullable', 'string', 'max:60'],
             'english'        => ['nullable', 'string', 'max:150'],
             'arti_indonesia' => ['required', 'string', 'max:150'],
+            'kegunaan'       => ['nullable', 'string', 'max:2000'],
             'urutan'         => ['nullable', 'integer', 'min:0'],
 
             'contoh_kalimat'                       => ['nullable', 'array', 'max:20'],
@@ -89,6 +90,7 @@ class KosakataRequest extends FormRequest
             'baca_indonesia' => 'Cara baca Indonesia',
             'english'        => 'Arti Inggris',
             'arti_indonesia' => 'Arti Indonesia',
+            'kegunaan'       => 'Kegunaan kata',
             'urutan'         => 'Urutan',
 
             'contoh_kalimat'                       => 'Contoh kalimat',

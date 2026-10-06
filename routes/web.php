@@ -11,6 +11,8 @@ use App\Http\Controllers\Admin\ProfilController as AdminProfilController;
 use App\Http\Controllers\Admin\WebsiteSettingController as AdminWebsiteSettingController;
 use App\Http\Controllers\Login\AuthController;
 use App\Http\Controllers\Pelajar\DashboardController as PelajarDashboardController;
+use App\Http\Controllers\Pelajar\HafalanController as PelajarHafalanController;
+use App\Http\Controllers\Pelajar\LatihanController as PelajarLatihanController;
 use App\Http\Controllers\PelajarFlashcardController;
 use App\Http\Controllers\PelajarKosakataController;
 use Illuminate\Support\Facades\Route;
@@ -95,5 +97,19 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pelajar/flashcard', [PelajarFlashcardController::class, 'index'])->name('pelajar.flashcard.index');
         Route::get('/pelajar/flashcard/mulai', [PelajarFlashcardController::class, 'mulai'])->name('pelajar.flashcard.mulai');
         Route::post('/pelajar/flashcard/jawab', [PelajarFlashcardController::class, 'jawab'])->name('pelajar.flashcard.jawab');
+
+        // Hafalan saya: jumlah ingat / lupa / berikutnya + pencarian kata + riwayat review
+        Route::get('/pelajar/hafalan', [PelajarHafalanController::class, 'index'])->name('pelajar.hafalan.index');
+
+        // Latihan & ujian (grup soal hasil generator). Saat jawaban dikumpulkan, hafalan
+        // (progres_hafalans) dan riwayat_reviews (sumber 'soal') diperbarui otomatis.
+        Route::get('/pelajar/latihan', [PelajarLatihanController::class, 'index'])->name('pelajar.latihan.index');
+        Route::get('/pelajar/latihan/{grupSoal}', [PelajarLatihanController::class, 'show'])->name('pelajar.latihan.show');
+        Route::post('/pelajar/latihan/{grupSoal}/mulai', [PelajarLatihanController::class, 'mulai'])->name('pelajar.latihan.mulai');
+
+        // Mengerjakan -> kumpulkan -> hasil
+        Route::get('/pelajar/pengerjaan/{hasilUjian}', [PelajarLatihanController::class, 'kerjakan'])->name('pelajar.pengerjaan.kerjakan');
+        Route::post('/pelajar/pengerjaan/{hasilUjian}', [PelajarLatihanController::class, 'kumpulkan'])->name('pelajar.pengerjaan.kumpulkan');
+        Route::get('/pelajar/pengerjaan/{hasilUjian}/hasil', [PelajarLatihanController::class, 'hasil'])->name('pelajar.pengerjaan.hasil');
     });
 });

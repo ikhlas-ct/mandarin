@@ -22,10 +22,10 @@ class KosakataTemplateExport implements Export, WithMultipleSheets
         return [
             $this->lembar(
                 'Kosakata',
-                ['hanzi', 'pinyin', 'arti_indonesia', 'baca_indonesia', 'english', 'kategori', 'level_hsk', 'urutan'],
+                ['hanzi', 'pinyin', 'arti_indonesia', 'baca_indonesia', 'english', 'kegunaan', 'kategori', 'level_hsk', 'urutan'],
                 [
-                    ['你好', 'nǐ hǎo', 'Halo', 'ni hao', 'Hello', 'Sapaan', 1, ''],
-                    ['谢谢', 'xièxie', 'Terima kasih', 'sie sie', 'Thank you', 'Sapaan', 1, ''],
+                    ['你好', 'nǐ hǎo', 'Halo', 'ni hao', 'Hello', 'Sapaan umum saat bertemu siapa saja, kapan pun sepanjang hari.', 'Sapaan', 1, ''],
+                    ['谢谢', 'xièxie', 'Terima kasih', 'sie sie', 'Thank you', 'Diucapkan untuk berterima kasih setelah dibantu atau diberi sesuatu.', 'Sapaan', 1, ''],
                 ]
             ),
             $this->lembar(

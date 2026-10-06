@@ -159,6 +159,10 @@
                                 <div class="info-value">{{ $kosakata->english ?: '-' }}</div>
                             </div>
                             <div class="info-item">
+                                <div class="info-label">Kegunaan</div>
+                                <div class="info-value" style="white-space:pre-line;">{{ $kosakata->kegunaan ?: '-' }}</div>
+                            </div>
+                            <div class="info-item">
                                 <div class="info-label">Kategori</div>
                                 <div class="info-value">
                                     @if ($kosakata->kategori)

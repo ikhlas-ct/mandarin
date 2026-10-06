@@ -157,6 +157,17 @@
                                         @enderror
                                     </div>
 
+                                    <div class="col-12">
+                                        <label for="kegunaan" class="form-label">Kegunaan Kata</label>
+                                        <textarea id="kegunaan" name="kegunaan" rows="3" maxlength="2000"
+                                            class="form-control @error('kegunaan') is-invalid @enderror"
+                                            placeholder="Contoh: Dipakai untuk menyebut air minum sehari-hari, misalnya saat memesan minuman atau mengatakan haus.">{{ old('kegunaan', $kosakata->kegunaan) }}</textarea>
+                                        <div class="form-text">Jelaskan kapan / dalam situasi apa kata ini dipakai (opsional).</div>
+                                        @error('kegunaan')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
                                     <div class="col-md-4">
                                         <label for="kategori_id" class="form-label">Kategori</label>
                                         <select id="kategori_id" name="kategori_id" class="form-select @error('kategori_id') is-invalid @enderror">

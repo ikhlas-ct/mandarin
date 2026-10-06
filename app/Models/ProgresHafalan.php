@@ -13,6 +13,20 @@ class ProgresHafalan extends Model
     public const LUPA_DAN_INGAT   = 'lupa_dan_ingat';
     public const BERIKUTNYA       = 'berikutnya';
 
+    /** Label tampilan untuk tiap status. */
+    public const LABEL = [
+        self::INGAT_SEPENUHNYA => 'Ingat sepenuhnya',
+        self::LUPA_DAN_INGAT   => 'Lupa & ingat',
+        self::BERIKUTNYA       => 'Berikutnya',
+    ];
+
+    /** Warna badge Bootstrap untuk tiap status. */
+    public const WARNA = [
+        self::INGAT_SEPENUHNYA => 'success',
+        self::LUPA_DAN_INGAT   => 'warning',
+        self::BERIKUTNYA       => 'secondary',
+    ];
+
     protected $table = 'progres_hafalans';
 
     protected $fillable = [
@@ -43,6 +57,16 @@ class ProgresHafalan extends Model
     public function kosakata(): BelongsTo
     {
         return $this->belongsTo(Kosakata::class, 'kosakata_id');
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return self::LABEL[$this->status] ?? (string) $this->status;
+    }
+
+    public function getStatusWarnaAttribute(): string
+    {
+        return self::WARNA[$this->status] ?? 'secondary';
     }
 
     /** Hanya kelompok yang ikut popup review: lupa_dan_ingat & ingat_sepenuhnya. */
@@ -96,15 +120,15 @@ class ProgresHafalan extends Model
     }
 
     /**
-     * Catat satu jawaban flashcard ("Lupa" / "Ingat") sekaligus memindah status:
+     * Catat satu jawaban flashcard ("Lupa" / "Ingat") atau hasil soal sekaligus memindah status:
      * - Lupa  -> lupa_dan_ingat,   review besok (mulai 00:00)
      * - Ingat -> ingat_sepenuhnya, review 7 hari lagi
-     * Riwayat mencatat status SEBELUM dipindah. Sumber memakai 'popup'
-     * karena enum riwayat_reviews.sumber hanya mengenal 'popup' dan 'soal'.
+     * Riwayat mencatat status SEBELUM dipindah. $sumber: 'popup' (flashcard, bawaan)
+     * atau 'soal' (hasil latihan/ujian), sesuai enum riwayat_reviews.sumber.
      */
-    public function catatKartu(bool $ingat): void
+    public function catatKartu(bool $ingat, string $sumber = 'popup'): void
     {
-        DB::transaction(function () use ($ingat) {
+        DB::transaction(function () use ($ingat, $sumber) {
             $statusLama = $this->status;
 
             $this->update([
@@ -118,7 +142,7 @@ class ProgresHafalan extends Model
             RiwayatReview::create([
                 'pelajar_id'         => $this->pelajar_id,
                 'kosakata_id'        => $this->kosakata_id,
-                'sumber'             => 'popup',
+                'sumber'             => $sumber,
                 'status_saat_review' => $statusLama,
                 'benar'              => $ingat,
                 'direview_pada'      => now(),

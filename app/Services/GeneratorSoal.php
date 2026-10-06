@@ -17,7 +17,7 @@ use InvalidArgumentException;
  * - hanzi_arti : "Apa arti dari 你好?"            -> pilihan berupa arti Indonesia   (reading)
  * - arti_hanzi : "Mana hanzi untuk 'halo'?"       -> pilihan berupa hanzi            (reading)
  * - isian      : kalimat contoh dengan titik kosong -> pilihan berupa hanzi          (reading)
- * - listening  : "Dengarkan audio, pilih arti"    -> audio diunggah admin belakangan (listening)
+ * - listening  : "Dengarkan suara, pilih arti"    -> suara dari TTS browser (hanzi kata); file audio opsional (listening)
  */
 class GeneratorSoal
 {
@@ -69,6 +69,7 @@ class GeneratorSoal
 
                 Soal::create($data + [
                     'grup_soal_id' => $grupSoal->id,
+                    'kosakata_id'  => $target->id, // supaya hasil jawaban bisa memperbarui hafalan pelajar
                     'urutan'       => $urutan++,
                     'poin'         => 1,
                 ]);
@@ -134,11 +135,11 @@ class GeneratorSoal
             case 'listening':
                 return $this->susun(
                     bagian: Soal::LISTENING,
-                    pertanyaan: 'Dengarkan audio, lalu pilih arti yang tepat.',
+                    pertanyaan: 'Dengarkan suara, lalu pilih arti yang tepat.',
                     benar: $k->arti_indonesia,
                     pengecoh: $this->pengecoh($k, $semua, 'arti_indonesia'),
-                    // Catatan untuk admin: kata apa yang harus direkam. Audio diunggah lewat form soal.
-                    penjelasan: "Audio: {$k->hanzi} ({$k->pinyin}) = {$k->arti_indonesia}",
+                    // Suara dibacakan TTS browser dari hanzi kata ini; file audio lewat form soal bersifat opsional.
+                    penjelasan: "Dengar: {$k->hanzi} ({$k->pinyin}) = {$k->arti_indonesia}",
                 );
         }
 
