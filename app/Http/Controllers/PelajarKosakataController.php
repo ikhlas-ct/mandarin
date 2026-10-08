@@ -43,7 +43,9 @@ class PelajarKosakataController extends Controller
         $pelajar = $this->pelajarLogin();
         $pid     = $pelajar->id;
 
+        // Hanya terima status yang valid; selain itu dianggap "semua".
         $status  = $request->query('status');
+        $status  = array_key_exists((string) $status, self::STATUS) ? $status : null;
         $perPage = in_array((int) $request->query('per_page'), [25, 50, 100], true)
             ? (int) $request->query('per_page')
             : 25;
@@ -81,7 +83,8 @@ class PelajarKosakataController extends Controller
                 ->where('status', $status));
         }
 
-        $kosakatas = $query->urut()->paginate($perPage)->withQueryString();
+        // Urutan: level HSK dulu (HSK 1, 2, ...; tanpa level di paling akhir), lalu kolom urutan.
+        $kosakatas = $query->urutLevel()->paginate($perPage)->withQueryString();
 
         // Statistik (selalu dari seluruh kosakata, tidak ikut filter)
         $total  = Kosakata::count();

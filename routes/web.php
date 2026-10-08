@@ -47,13 +47,23 @@ Route::middleware(['auth'])->group(function () {
             ->names('admin.kosakata')
             ->parameters(['kosakata' => 'kosakata']);
 
-        // Grup kosakata + generator soal latihan (pilih kata manual -> buat soal A/B/C/D otomatis)
-        Route::get('/admin/grup-kosakata', [AdminGrupKosakataController::class, 'index'])->name('admin.grup-kosakata.index');
-        Route::post('/admin/grup-kosakata', [AdminGrupKosakataController::class, 'store'])->name('admin.grup-kosakata.store');
-        Route::delete('/admin/grup-kosakata/{grup}', [AdminGrupKosakataController::class, 'destroy'])->name('admin.grup-kosakata.destroy');
+        // Grup kosakata (CRUD: index, create, store, show, edit, update, destroy) + generator soal latihan.
+        // Parameter diganti 'grup' supaya cocok dengan type-hint GrupKosakata $grup di controller.
+        Route::resource('admin/grup-kosakata', AdminGrupKosakataController::class)
+            ->names('admin.grup-kosakata')
+            ->parameters(['grup-kosakata' => 'grup']);
+
+        // Buat soal otomatis (A/B/C/D) dari kata-kata di grup.
         Route::post('/admin/grup-kosakata/{grup}/generate', [AdminGrupKosakataController::class, 'generate'])->name('admin.grup-kosakata.generate');
-        // Jaga-jaga kalau URL generate terbuka lewat GET (refresh/history): arahkan ke halaman utama.
-        Route::get('/admin/grup-kosakata/{grup}/generate', fn () => redirect()->route('admin.grup-kosakata.index'));
+        // Jaga-jaga kalau URL generate terbuka lewat GET (refresh/history): arahkan ke detail grup.
+        Route::get('/admin/grup-kosakata/{grup}/generate', fn ($grup) => redirect()->route('admin.grup-kosakata.show', $grup));
+
+        // Kelola latihan hasil generate: edit pengaturan, aktifkan/nonaktifkan, dan hapus.
+        Route::post('/admin/grup-kosakata/{grup}/latihan/{grupSoal}/tautkan', [AdminGrupKosakataController::class, 'tautkanLatihan'])->name('admin.grup-kosakata.latihan.tautkan');
+        Route::get('/admin/grup-kosakata/{grup}/latihan/{grupSoal}/edit', [AdminGrupKosakataController::class, 'editLatihan'])->name('admin.grup-kosakata.latihan.edit');
+        Route::put('/admin/grup-kosakata/{grup}/latihan/{grupSoal}', [AdminGrupKosakataController::class, 'updateLatihan'])->name('admin.grup-kosakata.latihan.update');
+        Route::patch('/admin/grup-kosakata/{grup}/latihan/{grupSoal}/toggle', [AdminGrupKosakataController::class, 'toggleLatihan'])->name('admin.grup-kosakata.latihan.toggle');
+        Route::delete('/admin/grup-kosakata/{grup}/latihan/{grupSoal}', [AdminGrupKosakataController::class, 'destroyLatihan'])->name('admin.grup-kosakata.latihan.destroy');
 
         // Paragraf (CRUD) + upload/hapus gambar Summernote + import Excel
         // Route import, template, dan gambar HARUS di atas resource, supaya tidak dianggap {paragraf}.

@@ -61,6 +61,18 @@ class Kosakata extends Model
         return $query->orderBy('urutan')->orderBy('id');
     }
 
+    /**
+     * Urut berdasarkan level HSK dulu (tingkat kecil -> besar, tanpa level di akhir),
+     * lalu kolom urutan, lalu id.
+     */
+    public function scopeUrutLevel(Builder $query): Builder
+    {
+        return $query
+            ->orderByRaw('coalesce((select tingkat from level_hsks where level_hsks.id = kosakatas.level_hsk_id), 255)')
+            ->orderBy('kosakatas.urutan')
+            ->orderBy('kosakatas.id');
+    }
+
     /** Cari berdasarkan hanzi, pinyin, arti Indonesia, atau English. */
     public function scopeCari(Builder $query, ?string $kata): Builder
     {

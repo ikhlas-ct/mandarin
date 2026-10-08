@@ -16,6 +16,7 @@ class GrupSoal extends Model
 
     protected $fillable = [
         'level_hsk_id',
+        'grup_kosakata_id',
         'jenis',
         'judul',
         'deskripsi',
@@ -38,6 +39,12 @@ class GrupSoal extends Model
     public function levelHsk(): BelongsTo
     {
         return $this->belongsTo(LevelHsk::class, 'level_hsk_id');
+    }
+
+    /** Grup kosakata asal latihan ini (null kalau dibuat manual). */
+    public function grupKosakata(): BelongsTo
+    {
+        return $this->belongsTo(GrupKosakata::class, 'grup_kosakata_id');
     }
 
     /** Soal di dalam grup, sudah terurut. */

@@ -94,6 +94,13 @@
     /* ===== EMPTY STATE ===== */
     .empty-state { padding: 60px 20px; }
     .empty-state-icon { width: 72px; height: 72px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 1.6rem; color: #94a3b8; }
+
+    /* ===== AJAX: PENCARIAN & LOADING ===== */
+    #input-cari { padding-right: 34px; }
+    .btn-hapus-cari { display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 5; border: none; background: transparent; color: #94a3b8; font-size: .9rem; padding: 0; line-height: 1; }
+    .btn-hapus-cari:hover { color: #64748b; }
+    #daftar-wrap { transition: opacity .15s ease; }
+    #daftar-wrap.memuat { opacity: .45; pointer-events: none; }
 </style>
 @endsection
 
@@ -133,10 +140,10 @@
                 </div>
             @endif
 
-            {{-- ===== STAT CARDS: klik untuk filter status ===== --}}
-            <div class="row g-3 mb-4">
+            {{-- ===== STAT CARDS: klik untuk filter status (tanpa reload, lewat AJAX) ===== --}}
+            <div class="row g-3 mb-4" id="stat-filter">
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('pelajar.kosakata.index') }}" class="stat-link">
+                    <a href="{{ route('pelajar.kosakata.index') }}" class="stat-link" data-status="">
                         <div class="card stat-card blue {{ ! $statusAktif ? 'aktif' : '' }}">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="stat-icon blue"><i class="fas fa-language"></i></div>
@@ -152,7 +159,7 @@
                 @php $warna = ['berikutnya' => 'slate', 'lupa_dan_ingat' => 'orange', 'ingat_sepenuhnya' => 'green']; @endphp
                 @foreach ($statusList as $kode => $info)
                     <div class="col-6 col-md-3">
-                        <a href="{{ route('pelajar.kosakata.index', ['status' => $kode]) }}" class="stat-link">
+                        <a href="{{ route('pelajar.kosakata.index', ['status' => $kode]) }}" class="stat-link" data-status="{{ $kode }}">
                             <div class="card stat-card {{ $warna[$kode] }} {{ $statusAktif === $kode ? 'aktif' : '' }}">
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="stat-icon {{ $warna[$kode] }}"><i class="fas {{ $info['ikon'] }}"></i></div>
@@ -179,15 +186,18 @@
                     </small>
                 </div>
 
-                {{-- Filter --}}
+                {{-- Filter (AJAX: hasil langsung berubah saat mengetik / memilih) --}}
                 <div class="filter-section">
-                    <form method="GET" action="{{ route('pelajar.kosakata.index') }}">
+                    <form id="form-filter" method="GET" action="{{ route('pelajar.kosakata.index') }}" autocomplete="off">
                         <div class="row g-2 align-items-end">
                             <div class="col-12 col-md-3">
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                    <input type="text" name="search" class="form-control"
-                                        placeholder="Cari hanzi / pinyin / arti..." value="{{ request('search') }}">
+                                    <input type="text" name="search" id="input-cari" class="form-control"
+                                        placeholder="Ketik hanzi / pinyin / arti..." value="{{ request('search') }}">
+                                    <button type="button" class="btn-hapus-cari" id="btn-hapus-cari" title="Hapus pencarian" aria-label="Hapus pencarian">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
                                 </div>
                             </div>
 
@@ -233,19 +243,16 @@
                             </div>
 
                             <div class="col-auto">
-                                <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-search me-1"></i> Filter
+                                <button type="button" id="btn-reset" class="btn btn-outline-secondary btn-sm" title="Reset filter">
+                                    <i class="fas fa-redo-alt"></i> Reset
                                 </button>
-                                <a href="{{ route('pelajar.kosakata.index') }}" class="btn btn-outline-secondary btn-sm ms-1"
-                                    title="Reset filter">
-                                    <i class="fas fa-redo-alt"></i>
-                                </a>
                             </div>
                         </div>
                     </form>
                 </div>
 
-                {{-- Table (dibungkus form untuk pindah status banyak sekaligus) --}}
+                {{-- Tabel + footer: isinya diganti lewat AJAX --}}
+                <div id="daftar-wrap">
                 <form id="form-massal" method="POST" action="{{ route('pelajar.kosakata.status') }}">
                     @csrf
 
@@ -343,18 +350,33 @@
                             </table>
                         </div>
                     </div>
+</form>
+
+{{-- Footer: info jumlah hasil selalu tampil (berguna saat mencari), pagination hanya kalau lebih dari satu halaman --}}
+@if ($kosakatas->total() > 0)
+    <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <small class="text-muted">
+            Menampilkan
+            <strong>{{ $kosakatas->firstItem() }}</strong>–<strong>{{ $kosakatas->lastItem() }}</strong>
+            dari <strong>{{ $kosakatas->total() }}</strong> kata
+        </small>
+        @if ($kosakatas->hasPages())
+            {{ $kosakatas->links() }}
+        @endif
+    </div>
+@endif
+                </div>
 
                     {{-- Bar aksi: muncul kalau ada kata yang dicentang --}}
                     <div class="bulk-bar" id="bulk-bar" role="region" aria-label="Pindahkan kata terpilih">
                         <span class="bulk-info"><span id="bulk-jumlah">0</span> kata dipilih · pindahkan ke:</span>
                         @foreach ($statusList as $kode => $info)
-                            <button type="submit" name="status" value="{{ $kode }}" class="bulk-btn {{ $kode }}">
+                            <button type="submit" form="form-massal" name="status" value="{{ $kode }}" class="bulk-btn {{ $kode }}">
                                 <i class="fas {{ $info['ikon'] }}"></i> {{ $info['label'] }}
                             </button>
                         @endforeach
                         <button type="button" class="bulk-btn bulk-batal" id="bulk-batal">Batal</button>
                     </div>
-                </form>
 
                 {{-- Form tersembunyi untuk tombol pindah status per baris --}}
                 <form id="form-satu" method="POST" action="{{ route('pelajar.kosakata.status') }}" class="d-none">
@@ -363,78 +385,196 @@
                     <input type="hidden" name="status" id="satu-status">
                 </form>
 
-                {{-- Pagination --}}
-                @if ($kosakatas->hasPages())
-                    <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <small class="text-muted">
-                            Menampilkan
-                            <strong>{{ $kosakatas->firstItem() }}</strong>–<strong>{{ $kosakatas->lastItem() }}</strong>
-                            dari <strong>{{ $kosakatas->total() }}</strong> kata
-                        </small>
-                        {{ $kosakatas->links() }}
-                    </div>
-                @endif
-
             </div>{{-- end .card --}}
 
         </div>{{-- end .page-inner --}}
     </div>{{-- end .container --}}
 @endsection
 
+
 @section('scripts')
     <script>
         (function () {
-            const bar     = document.getElementById('bulk-bar');
-            const jumlah  = document.getElementById('bulk-jumlah');
-            const semua   = document.getElementById('cek-semua');
-            const baris   = () => Array.from(document.querySelectorAll('.cek-baris'));
+            const wrap     = document.getElementById('daftar-wrap');
+            const form     = document.getElementById('form-filter');
+            const bar      = document.getElementById('bulk-bar');
+            const jumlah   = document.getElementById('bulk-jumlah');
+            const inCari   = form.elements['search'];
+            const inStatus = form.elements['status'];
+            const btnHapus = document.getElementById('btn-hapus-cari');
+            const kartuLink = document.querySelectorAll('#stat-filter a[data-status]');
+            const cekBaris = () => Array.from(wrap.querySelectorAll('.cek-baris'));
 
+            let timer = null;
+            let pengendali = null;
+
+            /* ================= PILIH BANYAK ================= */
             function perbarui() {
-                const dicentang = baris().filter(c => c.checked);
-                const n = dicentang.length;
+                const semua = wrap.querySelector('#cek-semua');
+                const daftar = cekBaris();
+                const n = daftar.filter(c => c.checked).length;
 
                 jumlah.textContent = n;
                 bar.classList.toggle('tampil', n > 0);
 
                 if (semua) {
-                    semua.checked = n > 0 && n === baris().length;
-                    semua.indeterminate = n > 0 && n < baris().length;
+                    semua.checked = n > 0 && n === daftar.length;
+                    semua.indeterminate = n > 0 && n < daftar.length;
                 }
-                baris().forEach(c => c.closest('tr').classList.toggle('terpilih', c.checked));
-            }
-
-            baris().forEach(c => c.addEventListener('change', perbarui));
-
-            if (semua) {
-                semua.addEventListener('change', () => {
-                    baris().forEach(c => c.checked = semua.checked);
-                    perbarui();
-                });
+                daftar.forEach(c => c.closest('tr').classList.toggle('terpilih', c.checked));
             }
 
             document.getElementById('bulk-batal').addEventListener('click', () => {
-                baris().forEach(c => c.checked = false);
+                cekBaris().forEach(c => c.checked = false);
                 perbarui();
             });
 
-            // Klik baris (di luar checkbox / tombol / link) membuka halaman detail.
-            document.querySelectorAll('tr.baris-klik').forEach(tr => {
-                tr.addEventListener('click', e => {
-                    if (e.target.closest('a, button, input, label, .td-cek')) return;
-                    window.location.href = tr.dataset.href;
+            /* ================= AJAX: MUAT DAFTAR ================= */
+            function bangunUrl() {
+                const params = new URLSearchParams();
+                new FormData(form).forEach((nilai, kunci) => {
+                    if (nilai !== '') params.set(kunci, nilai);
+                });
+                const query = params.toString();
+                return form.getAttribute('action') + (query ? '?' + query : '');
+            }
+
+            async function muat(url, gulir = false) {
+                if (pengendali) pengendali.abort();           // batalkan permintaan lama yang belum selesai
+                const saya = pengendali = new AbortController();
+                wrap.classList.add('memuat');
+
+                try {
+                    const res = await fetch(url, {
+                        headers: { 'Accept': 'text/html' },
+                        signal: saya.signal,
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+                    const dok  = new DOMParser().parseFromString(await res.text(), 'text/html');
+                    const baru = dok.getElementById('daftar-wrap');
+                    if (!baru) throw new Error('respons tidak berisi daftar (sesi habis?)');
+                    wrap.innerHTML = baru.innerHTML;
+                    history.replaceState(null, '', url);       // URL ikut berubah supaya refresh / tombol back tetap di filter yang sama
+                    perbarui();
+
+                    if (gulir) wrap.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                    console.error(err);
+                    wrap.innerHTML =
+                        '<div class="empty-state text-center">' +
+                        '<div class="empty-state-icon"><i class="fas fa-exclamation-triangle"></i></div>' +
+                        '<div class="fw-semibold text-secondary mb-1">Gagal memuat data</div>' +
+                        '<div class="text-muted" style="font-size:.8rem;">Coba muat ulang halaman. (' + (err.message || err) + ')</div></div>';
+                } finally {
+                    if (pengendali === saya) wrap.classList.remove('memuat');
+                }
+            }
+
+            /* ================= PENCARIAN (live) ================= */
+            function tampilkanHapus() {
+                btnHapus.style.display = inCari.value ? 'block' : 'none';
+            }
+
+            function jadwalkanCari() {
+                tampilkanHapus();
+                clearTimeout(timer);
+                timer = setTimeout(() => muat(bangunUrl()), 300);   // tunggu 300 ms setelah berhenti mengetik
+            }
+
+            inCari.addEventListener('input', e => {
+                if (e.isComposing) return;                          // jangan cari saat IME (pinyin/hanzi) masih menyusun
+                jadwalkanCari();
+            });
+            inCari.addEventListener('compositionend', jadwalkanCari);
+
+            btnHapus.addEventListener('click', () => {
+                inCari.value = '';
+                tampilkanHapus();
+                clearTimeout(timer);
+                muat(bangunUrl());
+                inCari.focus();
+            });
+
+            // Enter di kolom cari: cari langsung tanpa reload halaman
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+                clearTimeout(timer);
+                muat(bangunUrl());
+            });
+
+            // Kategori / level / jumlah per halaman: langsung terapkan
+            form.querySelectorAll('select').forEach(s => {
+                s.addEventListener('change', () => {
+                    if (s === inStatus) setStatus(inStatus.value);   // sorot kartu yang sesuai
+                    muat(bangunUrl());
                 });
             });
 
-            // Tombol pindah status per baris.
-            document.querySelectorAll('.btn-st').forEach(btn => {
-                btn.addEventListener('click', () => {
+            /* ================= FILTER STATUS (kartu) ================= */
+            function setStatus(status) {
+                inStatus.value = status;
+                kartuLink.forEach(a => {
+                    a.querySelector('.stat-card').classList.toggle('aktif', a.dataset.status === status);
+                });
+            }
+
+            kartuLink.forEach(a => {
+                a.addEventListener('click', e => {
+                    e.preventDefault();
+                    setStatus(a.dataset.status);
+                    muat(bangunUrl());
+                });
+            });
+
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                inCari.value = '';
+                form.elements['kategori_id'].value = '';
+                form.elements['level_hsk_id'].value = '';
+                form.elements['per_page'].value = '25';
+                setStatus('');
+                tampilkanHapus();
+                muat(bangunUrl());
+            });
+
+            /* ================= EVENT DI DALAM DAFTAR (delegasi, tetap jalan setelah diganti AJAX) ================= */
+            wrap.addEventListener('change', e => {
+                if (e.target.id === 'cek-semua') {
+                    cekBaris().forEach(c => c.checked = e.target.checked);
+                    perbarui();
+                } else if (e.target.classList.contains('cek-baris')) {
+                    perbarui();
+                }
+            });
+
+            wrap.addEventListener('click', e => {
+                // Pagination lewat AJAX
+                const halaman = e.target.closest('.card-footer a[href]');
+                if (halaman) {
+                    e.preventDefault();
+                    muat(halaman.href, true);
+                    return;
+                }
+
+                // Tombol pindah status per baris
+                const btn = e.target.closest('.btn-st');
+                if (btn) {
                     if (btn.classList.contains('aktif')) return;
                     document.getElementById('satu-id').value = btn.dataset.id;
                     document.getElementById('satu-status').value = btn.dataset.status;
                     document.getElementById('form-satu').submit();
-                });
+                    return;
+                }
+
+                // Klik baris (di luar checkbox / tombol / link) membuka halaman detail
+                const tr = e.target.closest('tr.baris-klik');
+                if (tr && !e.target.closest('a, button, input, label, .td-cek')) {
+                    window.location.href = tr.dataset.href;
+                }
             });
 
+            tampilkanHapus();
             perbarui();
         })();
     </script>
