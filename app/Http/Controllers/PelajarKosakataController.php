@@ -7,6 +7,7 @@ use App\Models\Kosakata;
 use App\Models\LevelHsk;
 use App\Models\Pelajar;
 use App\Models\ProgresHafalan;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,29 +39,31 @@ class PelajarKosakataController extends Controller
         ],
     ];
 
+    /** Jumlah kartu yang dimuat per permintaan (awal & tiap "muat lagi"). */
+    private const PER_HALAMAN = 50;
+
     public function index(Request $request): View
     {
         $pelajar = $this->pelajarLogin();
         $pid     = $pelajar->id;
 
+        $cari = trim((string) $request->query('search'));
+
         // Hanya terima status yang valid; selain itu dianggap "semua".
-        $status  = $request->query('status');
-        $status  = array_key_exists((string) $status, self::STATUS) ? $status : null;
-        $perPage = in_array((int) $request->query('per_page'), [25, 50, 100], true)
-            ? (int) $request->query('per_page')
-            : 25;
+        $status = $request->query('status');
+        $status = array_key_exists((string) $status, self::STATUS) ? $status : null;
 
         $query = Kosakata::query()
             ->with([
                 'kategori',
                 'levelHsk',
+                'contohKalimats', // dipakai di popup detail
                 // Hanya progres milik pelajar yang login.
                 'progresHafalans' => fn ($q) => $q->where('pelajar_id', $pid),
             ])
-            ->withCount('contohKalimats')
-            ->cari($request->query('search'));
+            ->cari($cari);
 
-        // Filter kategori & level (sama seperti halaman admin)
+        // Filter kategori & level
         foreach (['kategori_id', 'level_hsk_id'] as $kolom) {
             $nilai = $request->query($kolom);
             if ($nilai === 'kosong') {
@@ -83,8 +86,12 @@ class PelajarKosakataController extends Controller
                 ->where('status', $status));
         }
 
-        // Urutan: level HSK dulu (HSK 1, 2, ...; tanpa level di paling akhir), lalu kolom urutan.
-        $kosakatas = $query->urutLevel()->paginate($perPage)->withQueryString();
+        // Urutan: kalau sedang mencari, yang paling mirip dulu; lalu level HSK (tanpa level di akhir), lalu urutan.
+        $kosakatas = $query
+            ->urutMirip($cari)
+            ->urutLevel()
+            ->paginate(self::PER_HALAMAN)
+            ->withQueryString();
 
         // Statistik (selalu dari seluruh kosakata, tidak ikut filter)
         $total  = Kosakata::count();
@@ -105,13 +112,13 @@ class PelajarKosakataController extends Controller
         ];
 
         return view('pages.hafalankosakata.index', [
-            'kosakatas'  => $kosakatas,
-            'kategoris'  => Kategori::orderBy('nama')->get(),
-            'levels'     => LevelHsk::orderBy('tingkat')->get(),
-            'stats'      => $stats,
-            'statusList' => self::STATUS,
+            'kosakatas'   => $kosakatas,
+            'kategoris'   => Kategori::orderBy('nama')->get(),
+            'levels'      => LevelHsk::orderBy('tingkat')->get(),
+            'stats'       => $stats,
+            'statusList'  => self::STATUS,
             'statusAktif' => $status,
-            'perPage'    => $perPage,
+            'cari'        => $cari,
         ]);
     }
 
@@ -137,7 +144,7 @@ class PelajarKosakataController extends Controller
      * Pindahkan status satu atau banyak kosakata sekaligus.
      * Dipakai oleh halaman daftar (pilih banyak) dan halaman detail (satu kata).
      */
-    public function updateStatus(Request $request): RedirectResponse
+    public function updateStatus(Request $request): RedirectResponse|JsonResponse
     {
         $pelajar = $this->pelajarLogin();
 
@@ -184,6 +191,16 @@ class PelajarKosakataController extends Controller
         });
 
         $label = self::STATUS[$data['status']]['label'];
+
+        // Dari popup kartu (fetch): balas JSON, tanpa redirect.
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok'       => true,
+                'dipindah' => $dipindah,
+                'status'   => $data['status'],
+                'label'    => $label,
+            ]);
+        }
 
         return back()->with(
             'success',

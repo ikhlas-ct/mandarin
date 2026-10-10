@@ -73,6 +73,30 @@ class Kosakata extends Model
             ->orderBy('kosakatas.id');
     }
 
+    /**
+     * Urutkan hasil pencarian dari yang paling mirip:
+     * 0 = sama persis, 1 = diawali kata yang dicari, 2 = hanya mengandung.
+     * Dipakai SEBELUM urutLevel() supaya yang paling mirip tampil paling atas.
+     */
+    public function scopeUrutMirip(Builder $query, ?string $kata): Builder
+    {
+        $kata = trim((string) $kata);
+
+        if ($kata === '') {
+            return $query;
+        }
+
+        $kolom = ['kosakatas.hanzi', 'kosakatas.pinyin', 'kosakatas.arti_indonesia', 'kosakatas.english'];
+        $sama  = implode(' or ', array_map(fn ($k) => "{$k} = ?", $kolom));
+        $awal  = implode(' or ', array_map(fn ($k) => "{$k} like ?", $kolom));
+        $pola  = addcslashes($kata, '%_\\') . '%';
+
+        return $query->orderByRaw(
+            "case when {$sama} then 0 when {$awal} then 1 else 2 end",
+            [...array_fill(0, 4, $kata), ...array_fill(0, 4, $pola)]
+        );
+    }
+
     /** Cari berdasarkan hanzi, pinyin, arti Indonesia, atau English. */
     public function scopeCari(Builder $query, ?string $kata): Builder
     {

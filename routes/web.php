@@ -110,6 +110,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Hafalan saya: jumlah ingat / lupa / berikutnya + pencarian kata + riwayat review
         Route::get('/pelajar/hafalan', [PelajarHafalanController::class, 'index'])->name('pelajar.hafalan.index');
+        // Data review (riwayat) satu kata, dipakai popup di halaman Hafalan Saya (JSON)
+        Route::get('/pelajar/hafalan/{kosakata}/riwayat', [PelajarHafalanController::class, 'riwayat'])->name('pelajar.hafalan.riwayat');
 
         // Latihan & ujian (grup soal hasil generator). Saat jawaban dikumpulkan, hafalan
         // (progres_hafalans) dan riwayat_reviews (sumber 'soal') diperbarui otomatis.

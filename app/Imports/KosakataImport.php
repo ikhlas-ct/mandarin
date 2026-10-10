@@ -245,8 +245,8 @@ class KosakataImport implements Import, WithMultipleSheets, SkipsUnknownSheets
                 'kosakata_pinyin'     => ['required', 'string'],
                 'kalimat_hanzi'       => ['required', 'string', 'max:255'],
                 'kalimat_pinyin'      => ['required', 'string', 'max:255'],
-                'kalimat_arti'        => ['required', 'string', 'max:255'],
-                'catatan_tata_bahasa' => ['nullable', 'string', 'max:255'],
+                'kalimat_arti'        => ['required', 'string'],
+                'catatan_tata_bahasa' => ['nullable', 'string'],
             ], [
                 'required' => 'kolom :attribute wajib diisi',
                 'max'      => 'kolom :attribute terlalu panjang (maks. :max karakter)',
